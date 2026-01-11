@@ -9,6 +9,7 @@ from loguru import logger
 T = TypeVar('T', bound=Type[BaseModel])
 
 
+""" 从Flask请求中提取JSON数据并反序列化为指定的Pydantic模型 """
 def get_obj_from_json(request: Request, type: T) -> any:
     # If it's in multipart/form-data format, then try to get the deserialized JSON object
     json_str = request.form.get("json", None)
@@ -17,7 +18,7 @@ def get_obj_from_json(request: Request, type: T) -> any:
     obj = type.model_validate_json(json_str)
     return obj
 
-
+""" 从Flask请求中提取图像数据并保存为临时文件 """
 def save_request_image(request: Request, prefix: str) -> str:
     image_file = request.files.get('image', None)
     if image_file is None:
@@ -35,7 +36,7 @@ def save_request_image(request: Request, prefix: str) -> str:
 
     return temp_file_path
 
-
+""" 从Flask请求中提取音频数据并保存为临时文件 """
 def get_request_audio_file(request: Request):
     # If it's in multipart/form-data format, then try to get the audio file
     audio_file = request.files.get('audio', None)

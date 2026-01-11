@@ -14,7 +14,7 @@ from common.abs_model import AbstractModel
 from common.decorator import log_model_loading
 from img_cap.blip.config import BlipModelConfig
 
-
+""" Salesforce/blip-image-captioning-large 图像字幕生成模型 """
 class BlipImageCaptioningLarge(AbstractModel):
 
     def __init__(self, config: BlipModelConfig):
@@ -26,12 +26,14 @@ class BlipImageCaptioningLarge(AbstractModel):
         self._model_path = config.model_path
         self._device = config.device
 
+    """ 加载模型和处理器 """
     @log_model_loading("Salesforce/blip-image-captioning-large")
     def load_model(self):
         self._processor = BlipProcessor.from_pretrained(self._model_path)
         self._model = BlipForConditionalGeneration.from_pretrained(self._model_path, torch_dtype=torch.float16).to(
             self._device)
 
+    """ 对输入图像进行字幕生成预测 """
     def predict(self, query: ImgCapQuery) -> ImgCapPrediction:
         raw_image = Image.open(query.img_path)
         inputs = self._processor(raw_image, query.prompt, return_tensors="pt").to(self._device, torch.float16)
@@ -41,5 +43,6 @@ class BlipImageCaptioningLarge(AbstractModel):
 
         return ImgCapPrediction(caption=output_text, lang="en")
 
+    """ 流式预测（未实现） """
     def stream_predict(self, *args, **kwargs) -> Any:
         raise NotImplementedError("Stream prediction has not implemented!")

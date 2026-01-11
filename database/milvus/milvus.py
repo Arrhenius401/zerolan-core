@@ -8,7 +8,6 @@ from zerolan.data.pipeline.milvus import MilvusInsert, MilvusInsertResult, Milvu
 
 from database.milvus.config import MilvusDBConfig
 
-
 class MilvusDatabase:
     def __init__(self, config: MilvusDBConfig):
         self._milvus_path: str = config.db_path
@@ -16,6 +15,7 @@ class MilvusDatabase:
         self._client: MilvusClient = MilvusClient(self._milvus_path)
         self._embedding_fn = model.DefaultEmbeddingFunction()
 
+    """尝试创建集合（Collection），如果已存在且 overwrite 为 True，则先删除再创建。"""
     def try_create_collection(self, collection_name: str, dimension: int, overwrite: bool = False):
         if self._client.has_collection(collection_name=collection_name):
             if overwrite:
@@ -28,6 +28,7 @@ class MilvusDatabase:
                 auto_id=True
             )
 
+    """插入数据到指定的集合（Collection）中。"""
     def insert(self, insert: MilvusInsert) -> MilvusInsertResult:
         assert isinstance(insert, MilvusInsert)
         self.try_create_collection(
@@ -45,6 +46,7 @@ class MilvusDatabase:
         return MilvusInsertResult(insert_count=res.get(
             "insert_count", -1), ids=res.get("ids", []))
 
+    """在指定的集合（Collection）中执行向量搜索。"""
     def search(self, query: MilvusQuery):
         assert isinstance(query, MilvusQuery)
         query_vectors = self._embedding_fn.encode_queries([query.query])
@@ -79,27 +81,32 @@ class MilvusApplication:
 
         self._database = database
 
+    """从请求的 JSON 数据中解析出指定类型的对象。"""
     def _from_json(self, t: Type[BaseModel]):
         with self._app.app_context():
             json_val = request.get_json()
             obj = t.model_validate(json_val)
             return obj
 
+    """将对象转换为 JSON 格式的响应。"""
     def _to_json(self, res: any):
         if isinstance(res, BaseModel):
             res = res.model_dump()
 
         return jsonify(res)
 
+    """处理插入请求，从 JSON 数据中解析出 MilvusInsert 对象，调用数据库插入方法，返回插入结果的 JSON 响应。"""
     def _handle_insert(self):
         insert: MilvusInsert = self._from_json(MilvusInsert)
         res = self._database.insert(insert)
         return self._to_json(res)
 
+    """处理搜索请求，从 JSON 数据中解析出 MilvusQuery 对象，调用数据库搜索方法，返回搜索结果的 JSON 响应。"""
     def _handle_search(self):
         query: MilvusQuery = self._from_json(MilvusQuery)
         res = self._database.search(query)
         return self._to_json(res)
 
+    """启动 Flask 应用。"""
     def run(self):
         self._app.run(self.host, self.port, False)

@@ -2,6 +2,7 @@ import numpy as np
 import io
 import subprocess
 
+""" 转换音频文件为单声道WAV格式 """
 def convert_to_mono(input_file, output_file, sample_rate: int = 16000):
     # ffmpeg command to convert audio to mono wav
     command = [
@@ -16,13 +17,14 @@ def convert_to_mono(input_file, output_file, sample_rate: int = 16000):
     # Run ffmpeg command
     subprocess.run(command, check=True)
 
+""" 从音频文件读取数据并转换为np.ndarray格式 """
 def from_file_to_np_array(input_file: str, dtype: str = "float32") -> (np.ndarray, int):
     import soundfile as sf
 
     data, samplerate = sf.read(input_file, dtype=dtype)
     return data, samplerate
 
-
+""" 从字节数据中读取数据并转换为np.ndarray格式 """
 def from_bytes_to_np_ndarray(bytes_data: bytes, dtype: str = "float32") -> (np.ndarray, int):
     """
     Convert byte data to np.ndarray format.

@@ -5,6 +5,7 @@ import requests
 from loguru import logger
 
 
+""" 为模型加载函数添加「加载日志」和「耗时统计」，同时捕获 AssertionError 并记录关键错误日志。 """
 def log_model_loading(model_info):
     def decorator(func):
         @wraps(func)
@@ -26,6 +27,7 @@ def log_model_loading(model_info):
     return decorator
 
 
+""" 为网络请求相关函数捕获 requests.ConnectTimeout（连接超时）异常，并给出针对性的解决方案提示，再重新抛出异常。 """
 def issue_solver():
     def decorator(func):
         @wraps(func)

@@ -23,6 +23,7 @@ class ChatGLM3_6B(AbstractModel):
         self._tokenizer: any = None
         self._model: any = None
 
+    """ 加载模型 """
     @log_model_loading("THUDM/ChatGLM3")
     def load_model(self):
 
@@ -37,6 +38,7 @@ class ChatGLM3_6B(AbstractModel):
             logger.info(f"Model is loaded without quantization.")
         assert self._tokenizer and self._model
 
+    """ 推理方法：完成输入解析 → 模型推理 → 结果格式化 """
     def predict(self, llm_query: LLMQuery) -> LLMPrediction:
         """
         Predict tokens based on history and query from LLM.
@@ -46,14 +48,18 @@ class ChatGLM3_6B(AbstractModel):
         Returns: See zerolan.data.pipeline.llm.LLMPrediction
 
         """
+        # 1. 格式转换：将通用的LLMQuery转为ChatGLM3要求的输入格式
         text, history = self._to_chatglm_format(llm_query)
         # Note: In the new version, past_key_values=None throws IndexError,
         # Because the underlying code does not determine whether past_key_values is None or not,
         # Instead, try to parse as long as there is a past_key_values parameter
+        # 2. 模型推理：调用ChatGLM3的chat接口，完成文本生成（内部会处理token）
         response, history = self._model.chat(self._tokenizer, text, history, top_p=1., temperature=1.)
         logger.debug(response)
+        # 3. 结果格式化：将ChatGLM3的输出转为通用的LLMPrediction格式
         return self._to_pipeline_format(response, history)
 
+    """ 流式推理方法：完成输入解析 → 模型流式推理 → 结果格式化 """
     def stream_predict(self, llm_query: LLMQuery):
         """
         Stream predict tokens based on history and query from LLM.
@@ -72,12 +78,14 @@ class ChatGLM3_6B(AbstractModel):
             logger.debug(response)
             yield self._to_pipeline_format(response, history)
 
+    """ 将通用的LLMQuery格式转为ChatGLM3要求的输入格式 """
     @staticmethod
     def _to_chatglm_format(llm_query: LLMQuery) -> (str, list[dict[str:str]]):
         text = llm_query.text
         history = [{'role': chat.role, 'metadata': '', 'content': chat.content} for chat in llm_query.history]
         return text, history
 
+    """ 格式化模型输出为通用的LLMPrediction格式 """
     @staticmethod
     def _to_pipeline_format(response: str, history: list[dict[str:str]]) -> LLMPrediction:
         history = [Conversation(role=chat['role'], content=chat['content']) for chat in history]

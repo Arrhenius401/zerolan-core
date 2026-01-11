@@ -26,6 +26,7 @@ class PaddleOCRModel(AbstractModel):
         self.model = PaddleOCR(use_angle_cls=True, lang=self.lang)
         assert self.model
 
+    """ 推理方法：完成输入解析 → 模型推理 → 结果格式化 """
     def predict(self, query: OCRQuery) -> OCRPrediction:
         result = self.model.ocr(query.img_path, cls=True)
         prediction = OCRPrediction(region_results=list())
@@ -45,6 +46,7 @@ class PaddleOCRModel(AbstractModel):
 
         return prediction
 
+    """ 流式推理方法（暂未实现） """
     def stream_predict(self, *args, **kwargs) -> Any:
         raise NotImplementedError
 
