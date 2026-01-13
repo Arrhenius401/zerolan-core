@@ -39,8 +39,14 @@ ENV PATH="/workspace/miniconda3/bin:${PATH}"
 RUN conda init bash
 
 # Create and activate conda environment
-RUN conda create -n paraformer python=3.10 -y && echo "source activate paraformer" > ~/.bashrc
-ENV PATH /workspace/miniconda3/envs/paraformer/bin:$PATH
+# 接受 Conda 服务条款并创建 conda 环境
+RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
+    conda create -n paraformer python=3.10 -y && \
+    echo "source activate paraformer" > ~/.bashrc
+
+# 修复 ENV 格式警告（key=value 格式）
+ENV PATH=/workspace/miniconda3/envs/paraformer/bin:$PATH
 
 # Clone the repository
 RUN cd /workspace/services/ && \
@@ -57,9 +63,23 @@ RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && 
     pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
 
 # https://mirrors.aliyun.com/pytorch-wheels https://mirrors.aliyun.com/pytorch-wheels/cu121/
-RUN pip install torch==2.3.1 torchaudio -f https://mirrors.aliyun.com/pytorch-wheels/cu121/
+# 安装指定版本的 torch 和匹配的 torchaudio，优先使用阿里云 PyTorch 镜像
+# 彻底切换 pip 源为阿里云（替代不可用的清华源）
+RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \
+    pip config set global.trusted-host mirrors.aliyun.com
+
+# 一次性安装基础依赖 + 指定版本的 torch 和 torchaudio（优先阿里云 PyTorch 镜像）
+RUN pip install filelock typing-extensions sympy networkx jinja2 fsspec requests && \
+    pip install torch==2.3.1 torchaudio==2.3.1 -f https://mirrors.aliyun.com/pytorch-wheels/cu121/
+
 # [Dev] Install zerolan-data
-RUN pip install git+https://github.com/AkagawaTsurunaki/zerolan-data.git@dev
+# 优化 Git 克隆参数，解决 TLS 连接中断问题
+RUN git config --global http.postBuffer 524288000 && \
+    git config --global http.sslVerify false && \
+    git config --global http.lowSpeedLimit 0 && \
+    git config --global http.lowSpeedTime 999999 && \
+    pip install --default-timeout=1000 git+https://github.com/AkagawaTsurunaki/zerolan-data.git@dev
+    
 RUN cd /workspace/services/zerolan-core && \
     pip install -r requirements.txt && \
     pip install -r ./asr/paraformer/requirements.txt
