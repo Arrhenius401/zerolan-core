@@ -10,6 +10,8 @@ from zerolan.data.pipeline.asr import ASRQuery, ASRStreamQuery, ASRPrediction
 
 class ASRApplication(AbstractApplication):
     def __init__(self, model, host: str, port: int):
+        # Python 中调用父类的 __init__ 方法时，super().__init__(...) 里不需要显式传递 self 参数
+        # super() 的本质：自动绑定当前实例（self）
         super().__init__(model, "asr")
         self.host = host
         self.port = port

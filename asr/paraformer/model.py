@@ -36,6 +36,7 @@ class SpeechParaformerModel:
         self._cache = {}
         self._is_final = False
 
+    """ 加载模型 """
     @log_model_loading("iic/speech_paraformer_asr_nat-zh-cn-16k-common-vocab8358-tensorflow1")
     def load_model(self):
         """
@@ -44,6 +45,7 @@ class SpeechParaformerModel:
         self._model = AutoModel(model=self._model_path, model_revision=self._version)
         assert self._model
 
+    """ 预测接口：完成输入解析 → 模型推理 → 结果格式化 """
     def predict(self, query: ASRQuery) -> ASRPrediction | None:
 
         """
@@ -60,6 +62,7 @@ class SpeechParaformerModel:
 
         return self._wrapper(wave_nparray, is_final)
 
+    """ 流式预测接口：完成输入解析 → 模型推理 → 结果格式化 """
     def stream_predict(self, query: ASRStreamQuery) -> ASRPrediction | None:
         """
         Stream predict words from the audio wave.
@@ -77,6 +80,7 @@ class SpeechParaformerModel:
         assert sample_rate and sample_rate == self._sample_rate, "The sampling rate must be 16000, otherwise the recognition results will be severely skewed."
         return self._wrapper(wave_nparray, query.is_final)
 
+    """ 模型推理封装 """
     def _wrapper(self, wave_nparray: np.ndarray, is_final: bool) -> ASRPrediction | None:
         assert wave_nparray is not None and isinstance(wave_nparray, np.ndarray), "Wrong format."
         assert len(wave_nparray) > 0, "The audio tensor size must be greater than 0."

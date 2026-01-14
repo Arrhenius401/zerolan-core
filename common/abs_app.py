@@ -20,6 +20,9 @@ class AbstractApplication(ABC):
     def _handle_status(self):
         return jsonify(AppStatus(status=self.status))
 
+    """
+        @abstractmethod 的作用：定义一个抽象方法，要求所有继承自该抽象类的子类必须实现这个方法。
+    """
     @abstractmethod
     def run(self):
         pass
