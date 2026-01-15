@@ -180,11 +180,32 @@ def vecdb_app(db):
         from database.milvus.config import MilvusDBConfig as Config
         db_config = config["config"]
 
-        database = DB(Config(**db_config))
-        app = App(database=database, host=config["host"], port=config["port"])
+        config = Config(**db_config)
+        database = DB(config)
+        app = App(database=database, host=config.host, port=config.port)
         return app
 
 
+
+
+""" ==================== 服务路由与启动 ==================== """
+""" 
+    1. 服务路由：get_app(service)
+    根据传入的service参数，分发到对应服务的初始化函数：
+"""
+def vidcap_app():
+    config = _config["VidCap"]
+    host, port = config["host"], config["port"]
+    model_id = config["id"]
+
+    from vid_cap.app import VidCapApplication
+    from vid_cap.hitea.model import HiteaBaseModel
+    from vid_cap.hitea.config import HiteaBaseModelConfig
+
+    config = HiteaBaseModelConfig(**config['config'][model_id])
+    model = HiteaBaseModel(config)
+    app = VidCapApplication(model=model, host=host, port=port)
+    return app
 
 """ ==================== 服务路由与启动 ==================== """
 """ 
@@ -206,6 +227,8 @@ def get_app(service):
         return vla_app(args.model)
     elif "vecdb" == service:
         return vecdb_app(args.db)
+    elif "vidcap" == service:
+        return vidcap_app()
     else:
         raise NotImplementedError("Unsupported service.")
 
