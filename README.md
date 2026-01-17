@@ -1,6 +1,6 @@
 # ZerolanCore
 
-![Static Badge](https://img.shields.io/badge/Python-3.1x-blue) ![Static Badge](https://img.shields.io/badge/LLM-purple) ![Static Badge](https://img.shields.io/badge/ASR-purple) ![Static Badge](https://img.shields.io/badge/TTS-purple) ![Static Badge](https://img.shields.io/badge/OCR-purple) ![Static Badge](https://img.shields.io/badge/Image%20Captioning-purple) ![Static Badge](https://img.shields.io/badge/Video%20Captioning-purple) ![Static Badge](https://img.shields.io/badge/VLA-purple) ![Static Badge](https://img.shields.io/badge/License-MIT-orange) ![Static Badge](https://img.shields.io/badge/ver-1.3-green) 
+![Static Badge](https://img.shields.io/badge/Python-3.1x-blue) ![Static Badge](https://img.shields.io/badge/LLM-purple) ![Static Badge](https://img.shields.io/badge/ASR-purple) ![Static Badge](https://img.shields.io/badge/TTS-purple) ![Static Badge](https://img.shields.io/badge/OCR-purple) ![Static Badge](https://img.shields.io/badge/Image%20Captioning-purple) ![Static Badge](https://img.shields.io/badge/Video%20Captioning-purple) ![Static Badge](https://img.shields.io/badge/VLA-purple) ![Static Badge](https://img.shields.io/badge/License-MIT-orange) ![Static Badge](https://img.shields.io/badge/ver-1.4-green) 
 
 ZerolanCore 集成了众多开源的、可本地部署的人工智能模型或服务，旨在使用统一的管线设计封装大语言模型（LLM）、自动语音识别（ASR）、文本转语音（TTS）、图像字幕（Image Captioning）、光学字符识别（OCR）、视频字幕（Video Captioning）等一系列的人工智能模型，并可以使用统一的配置文件和服务启动器快速部署和启动 AI 服务。
 
@@ -107,7 +107,8 @@ $env:HF_ENDPOINT = "https://hf-mirror.com"
 | [01-ai/Yi-6B-Chat](https://www.modelscope.cn/models/01ai/Yi-6B-Chat) | 中英   | ❌️        | 23.7 GiB                                            |
 | [augmxnt/shisa-7b-v1](https://huggingface.co/augmxnt/shisa-7b-v1)    | 日英   | ❌️        | 16.0 GiB                                            |
 | [DeepSeek-R1-Distill-Llama-8B](https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Llama-8B) | 中英   |❌️| 47.2 GiB                                            |
-| [DeepSeek-R1-Distill-Qwen-14B](https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-14B) | 中英   |❌️| 48.0 GiB 以上                                           |  
+| [DeepSeek-R1-Distill-Qwen-14B](https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-14B) | 中英   |❌️| 48.0 GiB 以上                                           |
+| [Ollama](https://github.com/ollama/ollama)                   | 多语     | ✅️        | 取决于本地模型 |
 
 > [!NOTE]
 >
@@ -117,6 +118,33 @@ $env:HF_ENDPOINT = "https://hf-mirror.com"
 > 4. [augmxnt/shisa-7b-v1](https://huggingface.co/augmxnt/shisa-7b-v1) 在测试时可能发生无法读取上下文的问题。
 > 5. [DeepSeek-R1-Distill-Llama-8B](https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Llama-8B) 支持双卡推理，但是存在语句异常中断问题，原因不详。
 > 6. [DeepSeek-R1-Distill-Qwen-14B](https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-14B) 支持双卡推理，但是其显存已经超出两张 NVIDIA GeForce RTX 4090 的极限。
+> 7. [Ollama](https://github.com/ollama/ollama) 确保本机已安装并启动 **Ollama 服务**。
+
+---
+
+如果使用 Ollama 服务，请执行。
+
+如果使用 `uv`，运行：
+
+```shell
+cd llm/ollama
+uv sync
+source .venv/bin/activate
+cd ../../
+uv run starter.py llm
+```
+
+假如你想要使用 `llama3.2:3b` 这个模型，那么执行（可能会受网络原因影响）：
+
+```shell
+ollama run llama3.2:3b
+```
+
+查询已经 pull 的模型：
+
+```shell
+ollama list
+```
 
 ---
 使用以下命令创建 [THUDM/GLM-4](https://github.com/THUDM/GLM-4) 的环境并启动模型。
@@ -268,7 +296,7 @@ python starter.py llm
 
 ---
 
-测试大语言模型的文字回复功能是否正常：
+测试大语言模型的文字回复功能（非流式推理）是否正常：
 
 ```shell
 curl -X POST http://localhost:11002/llm/predict \
@@ -290,6 +318,25 @@ EOF
 ```json
 {"id":"f57f9f9c-7109-4459-8bf3-48f7e5e4597c","response":"\nYour name is AkagawaTsurunaki. It's quite unique!","history":[{"role":"system","content":"You are a helpful assistant!","metadata":null},{"role":"user","content":"My name is AkagawaTsurunaki.","metadata":null},{"role":"assistant","content":"Hello, AkagawaTsurunaki.","metadata":null},{"role":"assistant","content":"\nYour name is AkagawaTsurunaki. It's quite unique!","metadata":null}]}
 ```
+
+测试大语言模型的文字回复功能（流式推理）是否正常：
+
+```shell
+curl -X POST http://localhost:11002/llm/stream-predict \
+-H "Content-Type: application/json; charset=utf-8" \
+-d @- <<EOF
+{
+    "text": "What is my name?",
+    "history": [
+        {"content": "You are a helpful assistant!", "metadata":null, "role":"system"},
+        {"content": "My name is AkagawaTsurunaki.", "metadata":null, "role":"user"},
+        {"content": "Hello, AkagawaTsurunaki.", "metadata":null, "role":"assistant"}
+    ]
+}
+EOF
+```
+
+返回值类似上面的，但应该是一点一点出现的。
 
 ### 自动语音识别模型
 
