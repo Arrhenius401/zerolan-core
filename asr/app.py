@@ -28,9 +28,16 @@ class ASRApplication(AbstractApplication):
             logger.info('Request received: processing...')
 
             query: ASRQuery = web_util.get_obj_from_json(request, ASRQuery)
-            if not os.path.exists(query.audio_path):
+
+            # os.path.exists(path)：用于判断指定路径（文件或目录）是否存在于当前文件系统中
+            # 若路径存在（无论它是文件、文件夹，甚至是符号链接指向的有效路径）→ 返回 True；
+            # 若路径不存在、路径无效（如含非法字符）、权限不足无法访问 → 返回 False。
+            if not os.path.exists(query.audio_path)  or not os.path.isfile(query.audio_path):
+                # 路径为空 或 不是文件（是目录/无效文件），保存请求中的音频
+                logger.warning("Audio file not found. Saving audio file...")
                 audio_path = web_util.save_request_audio(request, prefix="asr")
             else:
+                logger.debug(f"Audio file found at: {query.audio_path}")
                 audio_path = query.audio_path
 
             # Convert to mono channel audio file.

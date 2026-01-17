@@ -26,7 +26,8 @@ class ChatGLM3_6B(AbstractModel):
     """ 加载模型 """
     @log_model_loading("THUDM/ChatGLM3")
     def load_model(self):
-
+        # 加载tokenizer：本地无则从网络下载
+        # self._model_path 对应配置文件中的模型路径（如 THUDM/chatglm3-6b），若本地路径无该模型，会自动从 Hugging Face Hub 下载 tokenizer 配置和词汇表。
         self._tokenizer = AutoTokenizer.from_pretrained(self._model_path, trust_remote_code=True)
         if self._quantize:
             self._model = AutoModel.from_pretrained(self._model_path, trust_remote_code=True).quantize(

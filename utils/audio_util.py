@@ -15,6 +15,8 @@ def convert_to_mono(input_file, output_file, sample_rate: int = 16000):
     ]
 
     # Run ffmpeg command
+    # subprocess 是 Python 内置的一个用于调用系统外部命令 / 程序的模块
+    # 简单说就是 “让 Python 代码去执行电脑上的其他命令（比如 ffmpeg、cmd 命令等）”
     subprocess.run(command, check=True)
 
 """ 从音频文件读取数据并转换为np.ndarray格式 """
